@@ -27,6 +27,7 @@
                         'fade-in': 'fadeIn 0.3s ease-out',
                         'fade-in-up': 'fadeInUp 0.4s ease-out',
                         'scale-up': 'scaleUp 0.2s ease-out',
+                        'scale-in': 'scaleIn 0.15s ease-out',
                     },
                     keyframes: {
                         fadeIn: {
@@ -40,6 +41,10 @@
                         scaleUp: {
                             '0%': { opacity: '0', transform: 'scale(0.95)' },
                             '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
                         }
                     }
                 }
@@ -48,18 +53,11 @@
     </script>
     
     <style>
-        /* Estilos base para scrollbar oculto pero funcional */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        body {
-            background-color: #f5f5f7;
-            color: #1d1d1f;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { background-color: #f5f5f7; color: #1d1d1f; }
+        /* Blur backdrop for modals */
+        .backdrop-blur-xl { backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
     </style>
 </head>
 <body>
@@ -95,6 +93,8 @@
         const Clock = (p) => <IconWrapper {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconWrapper>;
         const CalendarDays = (p) => <IconWrapper {...p}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></IconWrapper>;
         const LayoutGrid = (p) => <IconWrapper {...p}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></IconWrapper>;
+        const Eye = (p) => <IconWrapper {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconWrapper>;
+        const Download = (p) => <IconWrapper {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconWrapper>;
 
         // --- UTILIDADES ---
         const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -102,16 +102,16 @@
         const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
         const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
 
-        // --- DATOS INICIALES (Si no hay LocalStorage) ---
+        // --- DATOS INICIALES ---
         const initialProjects = [
             { 
                 id: 1, title: 'Lanzamiento Q4', category: 'Marketing', color: 'bg-blue-500', textColor: 'text-blue-500', icon: null,
-                files: [{ id: 101, name: 'Plan de Medios.pdf', size: '2.4 MB', type: 'PDF', date: 'Hace 2 horas', icon: null }],
+                files: [{ id: 101, name: 'Demo_Imagen.png', size: '2.4 MB', type: 'PNG', date: 'Hace 2 horas', icon: null, content: null }],
                 tasks: [{ id: 1, text: 'Reunión inicial', date: new Date().toISOString().split('T')[0], completed: true }]
             },
             { 
                 id: 2, title: 'Rediseño Web', category: 'Desarrollo', color: 'bg-indigo-500', textColor: 'text-indigo-500', icon: null,
-                files: [{ id: 201, name: 'Wireframes_v2.fig', size: '12 MB', type: 'Figma', date: 'Hace 3 días', icon: null }],
+                files: [],
                 tasks: []
             },
         ];
@@ -125,9 +125,8 @@
             const [activeTab, setActiveTab] = useState('files');
             const [searchQuery, setSearchQuery] = useState('');
             
-            // Cargar desde LocalStorage o usar iniciales
             const [projects, setProjects] = useState(() => {
-                const saved = localStorage.getItem('appleProjects');
+                const saved = localStorage.getItem('appleProjects_v2');
                 return saved ? JSON.parse(saved) : initialProjects;
             });
 
@@ -136,8 +135,15 @@
                 return saved ? JSON.parse(saved) : { name: 'Usuario', avatar: null };
             });
 
-            // Guardar en LocalStorage cada vez que cambien
-            useEffect(() => { localStorage.setItem('appleProjects', JSON.stringify(projects)); }, [projects]);
+            // Guardar en LocalStorage con manejo de errores (QuotaExceeded)
+            useEffect(() => { 
+                try {
+                    localStorage.setItem('appleProjects_v2', JSON.stringify(projects)); 
+                } catch (e) {
+                    console.error("Storage full", e);
+                    alert("Almacenamiento lleno. Algunos archivos grandes no se guardarán permanentemente.");
+                }
+            }, [projects]);
             useEffect(() => { localStorage.setItem('appleUserProfile', JSON.stringify(userProfile)); }, [userProfile]);
 
             // Modales
@@ -145,36 +151,20 @@
             const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
             const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
             const [editingFileId, setEditingFileId] = useState(null);
+            const [previewFile, setPreviewFile] = useState(null); // Estado para la previsualización
 
             // Helpers Calendario Global
-            const getAllTasks = () => {
-                return projects.flatMap(p => p.tasks.map(t => ({
-                ...t, projectId: p.id, projectTitle: p.title, projectColor: p.color, projectTextColor: p.textColor
-                })));
-            };
-
+            const getAllTasks = () => projects.flatMap(p => p.tasks.map(t => ({...t, projectId: p.id, projectTitle: p.title, projectColor: p.color, projectTextColor: p.textColor})));
             const handleGlobalAddTask = (text, date, projectId) => {
-                const updatedProjects = projects.map(p => {
-                    if (p.id === parseInt(projectId)) {
-                        const newTask = { id: Date.now(), text, date, completed: false };
-                        return { ...p, tasks: [...p.tasks, newTask] };
-                    }
-                    return p;
-                });
+                const updatedProjects = projects.map(p => p.id === parseInt(projectId) ? { ...p, tasks: [...p.tasks, { id: Date.now(), text, date, completed: false }] } : p);
                 setProjects(updatedProjects);
             };
-
             const handleGlobalToggleTask = (taskId) => {
-                const updatedProjects = projects.map(p => ({
-                    ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
-                }));
+                const updatedProjects = projects.map(p => ({ ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t) }));
                 setProjects(updatedProjects);
             };
-
             const handleGlobalDeleteTask = (taskId) => {
-                const updatedProjects = projects.map(p => ({
-                    ...p, tasks: p.tasks.filter(t => t.id !== taskId)
-                }));
+                const updatedProjects = projects.map(p => ({ ...p, tasks: p.tasks.filter(t => t.id !== taskId) }));
                 setProjects(updatedProjects);
             };
 
@@ -197,16 +187,44 @@
                 setProjects(updatedProjects); setActiveProject(updatedProjects.find(p => p.id === projectId)); setIsSettingsModalOpen(false);
             };
 
-            // CRUD Archivos
+            // CRUD Archivos (Actualizado para leer contenido)
             const handleUploadFile = (file) => {
                 if (!activeProject) return;
-                const isFileObject = file instanceof File;
-                const fileName = isFileObject ? file.name : file;
-                const fileSize = isFileObject ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : '0.5 MB';
-                const newFile = { id: Date.now(), name: fileName, size: fileSize, type: fileName.split('.').pop().toUpperCase(), date: 'Justo ahora', icon: null };
-                const updatedProjects = projects.map(p => p.id === activeProject.id ? { ...p, files: [...p.files, newFile] } : p);
-                setProjects(updatedProjects); setActiveProject(updatedProjects.find(p => p.id === activeProject.id));
+
+                const addFileToState = (fileContent = null) => {
+                    const isFileObject = file instanceof File;
+                    const fileName = isFileObject ? file.name : file;
+                    const fileSize = isFileObject ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : '0.5 MB';
+                    const fileType = fileName.split('.').pop().toUpperCase();
+                    
+                    const newFile = {
+                        id: Date.now(),
+                        name: fileName,
+                        size: fileSize,
+                        type: fileType,
+                        date: 'Justo ahora',
+                        icon: null,
+                        content: fileContent // Guardamos el contenido real
+                    };
+
+                    const updatedProjects = projects.map(p => p.id === activeProject.id ? { ...p, files: [...p.files, newFile] } : p);
+                    setProjects(updatedProjects); 
+                    setActiveProject(updatedProjects.find(p => p.id === activeProject.id));
+                };
+
+                if (file instanceof File) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        // Limite de seguridad simple para localStorage (si es muy grande, no guardamos content para evitar crash inmediato)
+                        // Para este demo, intentamos guardar todo, el try/catch del useEffect manejará el error de cuota.
+                        addFileToState(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    addFileToState(null); // Archivo simulado
+                }
             };
+
             const handleRenameFile = (fileId, newName) => {
                 const updatedProjects = projects.map(p => p.id === activeProject.id ? { ...p, files: p.files.map(f => f.id === fileId ? { ...f, name: newName } : f) } : p);
                 setProjects(updatedProjects); setActiveProject(updatedProjects.find(p => p.id === activeProject.id)); setEditingFileId(null);
@@ -220,7 +238,7 @@
                 if (iconFile) reader.readAsDataURL(iconFile);
             };
 
-            // CRUD Tareas (Contexto Local)
+            // CRUD Tareas
             const handleAddTask = (taskText, taskDate) => {
                 if (!activeProject) return;
                 handleGlobalAddTask(taskText, taskDate, activeProject.id);
@@ -329,7 +347,7 @@
                                                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"><h3 className="font-semibold text-gray-700">Documentos</h3><div className="flex gap-2"><button className="p-1.5 hover:bg-gray-200 rounded text-gray-500"><ListIcon className="w-4 h-4"/></button><button className="p-1.5 hover:bg-gray-200 rounded text-gray-500"><GridIcon className="w-4 h-4"/></button></div></div>
                                                 <div className="p-2">
                                                     {activeProject.files.length === 0 ? <div className="flex flex-col items-center justify-center h-64 text-gray-400"><Folder className="w-12 h-12 mb-3 text-gray-200" /><p>No hay archivos todavía</p></div> : 
-                                                    <table className="w-full text-left border-collapse"><thead><tr className="text-xs text-gray-400 border-b border-gray-50"><th className="px-4 py-3 font-medium">Nombre</th><th className="px-4 py-3 font-medium">Tamaño</th><th className="px-4 py-3 font-medium">Fecha</th><th className="px-4 py-3 font-medium text-right w-16"></th></tr></thead><tbody>{activeProject.files.map((file) => (<FileRow key={file.id} file={file} isEditing={editingFileId === file.id} onEditStart={() => setEditingFileId(file.id)} onRename={handleRenameFile} onChangeIcon={handleChangeFileIcon} />))}</tbody></table>}
+                                                    <table className="w-full text-left border-collapse"><thead><tr className="text-xs text-gray-400 border-b border-gray-50"><th className="px-4 py-3 font-medium">Nombre</th><th className="px-4 py-3 font-medium">Tamaño</th><th className="px-4 py-3 font-medium">Fecha</th><th className="px-4 py-3 font-medium text-right w-16"></th></tr></thead><tbody>{activeProject.files.map((file) => (<FileRow key={file.id} file={file} isEditing={editingFileId === file.id} onEditStart={() => setEditingFileId(file.id)} onRename={handleRenameFile} onChangeIcon={handleChangeFileIcon} onPreview={() => setPreviewFile(file)} />))}</tbody></table>}
                                                 </div>
                                             </div>
                                         </div>
@@ -342,14 +360,80 @@
                         )}
                     </main>
 
+                    {/* Modals */}
                     {isModalOpen && <CreateProjectModal onClose={() => setIsModalOpen(false)} onCreate={handleCreateProject} />}
                     {isSettingsModalOpen && activeProject && <ProjectSettingsModal project={activeProject} onClose={() => setIsSettingsModalOpen(false)} onUpdate={handleUpdateProject} />}
                     {isProfileModalOpen && <ProfileSettingsModal user={userProfile} onClose={() => setIsProfileModalOpen(false)} onUpdate={handleUpdateProfile} />}
+                    {previewFile && <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />}
                 </div>
             );
         };
 
         // --- SUBCOMPONENTES ---
+
+        // Modal de Previsualización (Nuevo Componente)
+        const FilePreviewModal = ({ file, onClose }) => {
+            const isImage = ['PNG', 'JPG', 'JPEG', 'GIF', 'SVG', 'WEBP'].includes(file.type);
+            const isPDF = file.type === 'PDF';
+            
+            return (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center px-4 animate-fade-in">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative bg-white/90 backdrop-blur-xl rounded-[20px] shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col border border-white/20 overflow-hidden animate-scale-in">
+                         {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200/50 bg-white/50">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                   {file.icon ? <img src={file.icon} className="w-full h-full object-cover rounded-lg"/> : <FileText className="w-6 h-6 text-gray-500"/>}
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="font-semibold text-gray-900 truncate">{file.name}</h3>
+                                    <p className="text-xs text-gray-500">{file.size} • {file.type}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {file.content && (
+                                    <a href={file.content} download={file.name} className="p-2 hover:bg-gray-200/50 rounded-full transition-colors text-gray-600" title="Descargar">
+                                        <Download className="w-5 h-5"/>
+                                    </a>
+                                )}
+                                <button onClick={onClose} className="p-2 hover:bg-gray-200/50 rounded-full transition-colors text-gray-600">
+                                    <XIcon className="w-6 h-6"/>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-auto bg-[#f5f5f7] flex items-center justify-center p-4 relative">
+                            {file.content ? (
+                                isImage ? (
+                                    <img src={file.content} alt={file.name} className="max-w-full max-h-full object-contain shadow-lg rounded-md" />
+                                ) : isPDF ? (
+                                    <iframe src={file.content} className="w-full h-full rounded-md shadow-sm bg-white" title="PDF Preview"></iframe>
+                                ) : (
+                                    <div className="text-center">
+                                        <div className="w-24 h-24 bg-white rounded-2xl mx-auto flex items-center justify-center shadow-sm mb-4">
+                                            <FileText className="w-10 h-10 text-gray-400"/>
+                                        </div>
+                                        <p className="text-gray-500 font-medium">Previsualización no disponible para este formato.</p>
+                                        <p className="text-sm text-gray-400 mt-2 max-w-md mx-auto truncate break-all bg-gray-200/50 p-2 rounded">{file.content.substring(0, 50)}...</p>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="text-center">
+                                    <div className="w-24 h-24 bg-white rounded-2xl mx-auto flex items-center justify-center shadow-sm mb-4">
+                                         <Eye className="w-10 h-10 text-gray-300"/>
+                                    </div>
+                                    <p className="text-gray-500 font-medium">Archivo simulado</p>
+                                    <p className="text-sm text-gray-400 mt-1">Sube un archivo real para verlo aquí.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const ProjectCalendar = ({ tasks, onAddTask, onToggleTask, onDeleteTask, isGlobal = false, projects = [] }) => {
             const [currentDate, setCurrentDate] = useState(new Date());
             const [selectedDate, setSelectedDate] = useState(new Date());
@@ -385,7 +469,7 @@
             );
         };
 
-        const FileRow = ({ file, isEditing, onEditStart, onRename, onChangeIcon }) => {
+        const FileRow = ({ file, isEditing, onEditStart, onRename, onChangeIcon, onPreview }) => {
             const [menuOpen, setMenuOpen] = useState(false);
             const [tempName, setTempName] = useState(file.name);
             const menuRef = useRef(null);
@@ -393,7 +477,25 @@
             useEffect(() => { const handleClickOutside = (event) => { if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false); }; document.addEventListener('mousedown', handleClickOutside); return () => document.removeEventListener('mousedown', handleClickOutside); }, []);
             const handleRenameSubmit = () => { if (tempName.trim() && tempName !== file.name) onRename(file.id, tempName); else { setTempName(file.name); onRename(file.id, file.name); } };
             const handleIconChange = (e) => { if (e.target.files.length > 0) onChangeIcon(file.id, e.target.files[0]); setMenuOpen(false); };
-            return (<tr className="group hover:bg-blue-50/30 transition-colors rounded-lg text-sm text-gray-600 relative"><td className="px-4 py-3 flex items-center gap-3"><div className="w-8 h-8 rounded bg-orange-100 text-orange-600 flex items-center justify-center overflow-hidden relative flex-shrink-0 shadow-sm border border-orange-200/50">{file.icon ? <img src={file.icon} alt={file.name} className="w-full h-full object-cover" /> : <FileText className="w-4 h-4" />}</div>{isEditing ? <input autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} onBlur={handleRenameSubmit} onKeyDown={(e) => {if(e.key==='Enter')handleRenameSubmit(); if(e.key==='Escape'){setTempName(file.name);onRename(file.id, file.name);}}} className="font-medium text-gray-900 bg-white border-2 border-blue-500 rounded px-2 py-1 outline-none w-full shadow-sm" /> : <span className="font-medium text-gray-900 truncate max-w-[200px]">{file.name}</span>}</td><td className="px-4 py-3 text-xs">{file.size}</td><td className="px-4 py-3 text-xs">{file.date}</td><td className="px-4 py-3 text-right relative"><button onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all focus:opacity-100"><MoreHorizontal className="w-4 h-4" /></button>{menuOpen && <div ref={menuRef} className="absolute right-8 top-0 bg-white rounded-xl shadow-xl border border-gray-100 z-10 w-48 overflow-hidden animate-scale-up origin-top-right"><div className="p-1"><button onClick={() => { setMenuOpen(false); onEditStart(); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-xs font-medium flex items-center gap-2"><Edit2 className="w-3.5 h-3.5" /> Renombrar</button><button onClick={() => fileInputRef.current.click()} className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-xs font-medium flex items-center gap-2"><ImageIcon className="w-3.5 h-3.5" /> Cambiar Icono<input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleIconChange} /></button><div className="h-px bg-gray-100 my-1"></div><button className="w-full text-left px-3 py-2 hover:bg-red-50 hover:text-red-600 rounded-lg text-xs font-medium flex items-center gap-2 text-red-500"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button></div></div>}</td></tr>);
+            return (
+                <tr className="group hover:bg-blue-50/30 transition-colors rounded-lg text-sm text-gray-600 relative">
+                    <td className="px-4 py-3 flex items-center gap-3 cursor-pointer" onClick={() => !isEditing && onPreview()}>
+                        <div className="w-8 h-8 rounded bg-orange-100 text-orange-600 flex items-center justify-center overflow-hidden relative flex-shrink-0 shadow-sm border border-orange-200/50">
+                            {file.icon ? <img src={file.icon} alt={file.name} className="w-full h-full object-cover" /> : <FileText className="w-4 h-4" />}
+                        </div>
+                        {isEditing ? 
+                            <input autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} onBlur={handleRenameSubmit} onKeyDown={(e) => {if(e.key==='Enter')handleRenameSubmit(); if(e.key==='Escape'){setTempName(file.name);onRename(file.id, file.name);}}} className="font-medium text-gray-900 bg-white border-2 border-blue-500 rounded px-2 py-1 outline-none w-full shadow-sm" onClick={(e) => e.stopPropagation()} /> 
+                            : <span className="font-medium text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors">{file.name}</span>
+                        }
+                    </td>
+                    <td className="px-4 py-3 text-xs">{file.size}</td>
+                    <td className="px-4 py-3 text-xs">{file.date}</td>
+                    <td className="px-4 py-3 text-right relative">
+                        <button onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all focus:opacity-100"><MoreHorizontal className="w-4 h-4" /></button>
+                        {menuOpen && <div ref={menuRef} className="absolute right-8 top-0 bg-white rounded-xl shadow-xl border border-gray-100 z-10 w-48 overflow-hidden animate-scale-up origin-top-right"><div className="p-1"><button onClick={() => { setMenuOpen(false); onEditStart(); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-xs font-medium flex items-center gap-2"><Edit2 className="w-3.5 h-3.5" /> Renombrar</button><button onClick={() => fileInputRef.current.click()} className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-xs font-medium flex items-center gap-2"><ImageIcon className="w-3.5 h-3.5" /> Cambiar Icono<input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleIconChange} /></button><div className="h-px bg-gray-100 my-1"></div><button className="w-full text-left px-3 py-2 hover:bg-red-50 hover:text-red-600 rounded-lg text-xs font-medium flex items-center gap-2 text-red-500"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button></div></div>}
+                    </td>
+                </tr>
+            );
         };
 
         const FileUploader = ({ onUpload }) => {
