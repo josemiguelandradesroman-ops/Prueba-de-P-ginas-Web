@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Estática - Soluciones de IA</title>
+    <!-- Carga de Tailwind CSS (Frontend) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fondo oscuro */
+            color: #e6e6e6;
+        }
+        /* Estilo personalizado para el resaltado del texto */
+        .highlight-text {
+            background-image: linear-gradient(90deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header y Navegación -->
+    <header class="sticky top-0 z-50 bg-[#161b22] bg-opacity-95 shadow-lg backdrop-blur-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold highlight-text">
+                Quantum
+            </div>
+            <div class="space-x-4">
+                <a href="#inicio" class="text-gray-300 hover:text-teal-400 transition-colors">Inicio</a>
+                <a href="#caracteristicas" class="text-gray-300 hover:text-teal-400 transition-colors">Características</a>
+                <a href="#cta" class="text-gray-300 hover:text-teal-400 transition-colors">Contacto</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Sección Hero (Inicio) -->
+        <section id="inicio" class="py-24 md:py-40 text-center min-h-screen flex items-center justify-center">
+            <div class="max-w-4xl mx-auto px-6">
+                <h1 class="text-5xl sm:text-7xl font-extrabold leading-tight mb-6">
+                    Transforma tu <span class="highlight-text">Visión Digital</span> con IA
+                </h1>
+                <p class="text-xl sm:text-2xl text-gray-400 mb-10">
+                    La plataforma líder que impulsa el crecimiento y la eficiencia a través de la automatización inteligente.
+                </p>
+                <!-- CTA apunta a la sección CTA (navegación interna) -->
+                <a href="#cta" class="inline-block px-10 py-4 text-lg font-semibold text-white bg-teal-600 rounded-xl shadow-xl hover:bg-teal-500 transition-all transform hover:scale-[1.02]">
+                    Empieza Gratis Hoy
+                </a>
+            </div>
+        </section>
+
+        <!-- Sección de Características -->
+        <section id="caracteristicas" class="py-20 bg-[#161b22] border-t border-b border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-4xl font-bold text-center mb-16">
+                    ¿Por qué elegir <span class="highlight-text">nuestra plataforma</span>?
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <!-- Característica 1 -->
+                    <div class="bg-[#0d1117] p-8 rounded-2xl shadow-2xl border border-gray-700 transition-all hover:border-teal-500 transform hover:-translate-y-1">
+                        <div class="text-4xl mb-4 text-teal-400">⚡</div>
+                        <h3 class="text-2xl font-semibold mb-3">Velocidad Incomparable</h3>
+                        <p class="text-gray-400">Procesa datos y ejecuta tareas complejas en milisegundos, superando los límites de los sistemas tradicionales.</p>
+                    </div>
+
+                    <!-- Característica 2 -->
+                    <div class="bg-[#0d1117] p-8 rounded-2xl shadow-2xl border border-gray-700 transition-all hover:border-teal-500 transform hover:-translate-y-1">
+                        <div class="text-4xl mb-4 text-blue-400">🧠</div>
+                        <h3 class="text-2xl font-semibold mb-3">Aprendizaje Adaptativo</h3>
+                        <p class="text-gray-400">Nuestra IA aprende de cada interacción, mejorando continuamente la precisión y personalización de sus resultados.</p>
+                    </div>
+
+                    <!-- Característica 3 -->
+                    <div class="bg-[#0d1117] p-8 rounded-2xl shadow-2xl border border-gray-700 transition-all hover:border-teal-500 transform hover:-translate-y-1">
+                        <div class="text-4xl mb-4 text-pink-400">🔒</div>
+                        <h3 class="text-2xl font-semibold mb-3">Seguridad Garantizada</h3>
+                        <p class="text-gray-400">Implementamos cifrado de extremo a extremo y protocolos de seguridad de nivel empresarial para proteger sus datos.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección CTA (Llamada a la Acción) -->
+        <section id="cta" class="py-24 text-center">
+            <div class="max-w-3xl mx-auto px-6 bg-[#0d1117] p-10 rounded-3xl shadow-3xl border border-teal-600">
+                <h2 class="text-4xl font-bold mb-4">
+                    ¿Listo para el Futuro?
+                </h2>
+                <p class="text-xl text-gray-400 mb-8">
+                    Únete a miles de empresas que ya están redefiniendo sus operaciones. Empieza ahora sin compromiso.
+                </p>
+                <!-- CTA final usa '#' como marcador de posición, sin envío de datos o servidor -->
+                <a href="#" class="inline-block px-12 py-5 text-xl font-bold text-gray-900 bg-white rounded-xl shadow-2xl hover:bg-gray-200 transition-all transform hover:scale-105">
+                    Solicitar una Demo
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#161b22] py-8 border-t border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+            <p>&copy; 2025 Quantum Solutions. Todos los derechos reservados.</p>
+            <div class="mt-2 text-sm">
+                <a href="#" class="hover:text-teal-400 transition-colors">Política de Privacidad</a> | 
+                <a href="#" class="hover:text-teal-400 transition-colors">Términos de Servicio</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
